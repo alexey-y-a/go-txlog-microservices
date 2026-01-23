@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/alexey-y-a/go-txlog-microservices/libs/logger"
+	"github.com/alexey-y-a/go-txlog-microservices/services/api-gateway/internal/client"
 	apihttp "github.com/alexey-y-a/go-txlog-microservices/services/api-gateway/internal/http"
 )
 
@@ -16,11 +17,18 @@ func main() {
     logger.Init()
     log := logger.L().With().Str("service", "api-gateway").Logger()
 
+    kvBaseURL := "http://localhost:8081"
+    kvTimeOut := 3 * time.Second
+
+    kvClient := client.NewKVClient(kvBaseURL, kvTimeOut)
+
      mux := http.NewServeMux()
-     apihttp.RegisterRouters(mux)
+
+     handler := apihttp.NewHandler(kvClient)
+     handler.RegisterRouters(mux)
 
      addr := "8080"
-     srv :=  &http.Server {
+     server :=  &http.Server {
          Addr: addr,
          Handler: mux,
      }
@@ -31,7 +39,7 @@ func main() {
       signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
       go func() {
-          err := srv.ListenAndServe()
+          err := server.ListenAndServe()
           if err != nil && err != http.ErrServerClosed {
               log.Error().Err(err).Msg("api-gateway stopped with error")
           }
@@ -43,7 +51,7 @@ func main() {
       ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
       defer cancel()
 
-      err := srv.Shutdown(ctx)
+      err := server.Shutdown(ctx)
       if err != nil {
           log.Error().Err(err).Msg("api-gateway graceful shutdown failed")
       } else {
