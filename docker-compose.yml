@@ -1,0 +1,22 @@
+version : "3.9"
+
+services:
+  kv-service:
+    build:
+      context: .
+      dockerfile: ./services/kv-service/Dockerfile
+    container_name: kv-service
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./services/api-gateway/Dockerfile
+    container-name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kv-service
+    restart: unless-stopped

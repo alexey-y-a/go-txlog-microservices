@@ -17,7 +17,7 @@ func main() {
     logger.Init()
     log := logger.L().With().Str("service", "api-gateway").Logger()
 
-    kvBaseURL := "http://localhost:8081"
+    kvBaseURL := "http://kv-service:8081"
     kvTimeOut := 3 * time.Second
 
     kvClient := client.NewKVClient(kvBaseURL, kvTimeOut)
