@@ -81,7 +81,7 @@ func (c *KVClient) Get(key string) (string, bool, error) {
 
     resp, err := c.client.Do(req)
     if err != nil {
-        return "", false, fmt.Errorf("kvclient: do GET request: %w, err")
+        return "", false, fmt.Errorf("kvclient: do GET request: %w", err)
     }
     defer resp.Body.Close()
 
