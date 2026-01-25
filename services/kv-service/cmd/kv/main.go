@@ -44,5 +44,10 @@ func main() {
 		log.Info().Msg("kv-service stopped gracefully")
 	}
 
-	_ = logFile
+	err = logFile.Close()
+    if err != nil {
+         log.Error().Err(err).Msg("failed to close transaction log")
+    } else {
+        log.Info().Msg("transaction log closed")
+    }
 }

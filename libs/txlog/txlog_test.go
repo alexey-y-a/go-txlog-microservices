@@ -17,6 +17,11 @@ func TestFileLog_Append(t *testing.T) {
     logFile, err := NewFileLog(logPath)
     require.NoError(t, err, "NewFileLog should not return error")
 
+    defer func() {
+        err := logFile.Close()
+        require.NoError(t, err, "Close should not return error")
+    }()
+
     event1 := Event {
         Key: "user1",
         Value: "Alice",
