@@ -17,6 +17,10 @@ func (f *fakeLog) Append(e txlog.Event) error {
     return nil
 }
 
+func (f *fakeLog) Sync() error {
+    return nil
+}
+
 func (f *fakeLog) Close() error {
     return nil
 }

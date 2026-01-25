@@ -14,6 +14,7 @@ type Event struct {
 
 type Log interface {
     Append(e Event) error
+    Sync() error
     Close() error
 }
 
@@ -45,8 +46,21 @@ func (l *FileLog) Append(e Event) error {
     return nil
 }
 
+func (l *FileLog) Sync() error {
+    err := l.file.Sync()
+    if err != nil {
+        return fmt.Errorf("txlog: sync file: %w", err)
+    }
+    return nil
+}
+
 func (l *FileLog) Close() error {
-    err := l.file.Close()
+    err := l.Sync()
+    if err != nil {
+        return err
+    }
+
+    err = l.file.Close()
     if err != nil {
         return fmt.Errorf("txlog: close file: %w", err)
     }
