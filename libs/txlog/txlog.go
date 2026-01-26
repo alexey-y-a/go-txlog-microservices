@@ -1,6 +1,7 @@
 package txlog
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 )
@@ -36,9 +37,34 @@ func NewFileLog(path string) (*FileLog, error) {
 }
 
 func (l *FileLog) Append(e Event) error {
-    line := fmt.Sprintf("%s %s %s\n", e.Op, e.Key, e.Value)
+    keyBytes := []byte(e.Key)
+    valBytes := []byte(e.Value)
 
-    _, err := l.file.Write([]byte(line))
+    prefix := fmt.Sprintf("%s %d %d ", e.Op, len(keyBytes), len(valBytes))
+
+    var buf bytes.Buffer
+
+    _, err := buf.WriteString(prefix)
+    if err != nil {
+        return fmt.Errorf("txlog: write prefix: %w", err)
+    }
+
+    _, err = buf.Write(keyBytes)
+    if err != nil {
+        return fmt.Errorf("txlog: write key: %w", err)
+    }
+
+    _, err = buf.Write(valBytes)
+    if err != nil {
+        return fmt.Errorf("txlog: write value: %w", err)
+    }
+
+    err = buf.WriteByte('\n')
+    if err != nil {
+        return fmt.Errorf("txlog: write newline: %w", err)
+    }
+
+    _, err = l.file.Write(buf.Bytes())
     if err != nil {
         return fmt.Errorf("txlog: append event: %w", err)
     }
