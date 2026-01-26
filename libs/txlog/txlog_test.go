@@ -2,7 +2,6 @@ package txlog
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -45,6 +44,6 @@ func TestFileLog_Append(t *testing.T) {
 
     content := string(data)
 
-    require.True(t, strings.Contains(content, "set user1 Alice\n"), "log should contain first event line")
-    require.True(t, strings.Contains(content, "delete user2 \n"), "log should contain second event line")
+    require.Contains(t, content, "set 5 5 user1Alice", "log should contain encoded first event")
+    require.Contains(t, content, "delete 5 0 user2", "log should contain encoded second event")
 }
