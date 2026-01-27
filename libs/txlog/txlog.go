@@ -2,8 +2,19 @@ package txlog
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
+)
+
+const (
+    MaxKeySize = 1024
+    MaxValueSize = 65536
+)
+
+var (
+    ErrKeyTooLarge = errors.New("txlog: key size exceeds MaxKeySize")
+    ErrValueTooLarge = errors.New("txlog: value size exceeds MaxValueSize")
 )
 
 type Event struct {
@@ -39,6 +50,14 @@ func NewFileLog(path string) (*FileLog, error) {
 func (l *FileLog) Append(e Event) error {
     keyBytes := []byte(e.Key)
     valBytes := []byte(e.Value)
+
+    if len(keyBytes) > MaxKeySize {
+        return ErrKeyTooLarge
+    }
+
+    if len(valBytes) > MaxValueSize {
+        return ErrValueTooLarge
+    }
 
     prefix := fmt.Sprintf("%s %d %d ", e.Op, len(keyBytes), len(valBytes))
 
