@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alexey-y-a/go-txlog-microservices/libs/logger"
+	"github.com/alexey-y-a/go-txlog-microservices/libs/txlog"
 	"github.com/alexey-y-a/go-txlog-microservices/services/api-gateway/internal/client"
 )
 
@@ -79,6 +80,11 @@ func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+    if len([]byte(req.Key)) > txlog.MaxKeySize || len([]byte(req.Value)) > txlog.MaxValueSize {
+        w.WriteHeader(http.StatusBadRequest)
+        return
+    }
 
 	err = h.kvClient.Set(req.Key, req.Value)
 	if err != nil {
