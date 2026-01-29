@@ -1,6 +1,7 @@
 package txlog
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -110,4 +111,116 @@ func (l *FileLog) Close() error {
         return fmt.Errorf("txlog: close file: %w", err)
     }
     return nil
+}
+
+func CompactLogFile(path string) error {
+    f, err := os.Open(path)
+    if err != nil {
+        if errors.Is(err, os.ErrNotExist) {
+            return nil
+        }
+        return fmt.Errorf("txlog: open for compaction: %w", err)
+    }
+    defer f.Close()
+
+    scanner := bufio.NewScanner(f)
+    buf := make([]byte, 0, 64*1024)
+    scanner.Buffer(buf, MaxKeySize+MaxValueSize+256)
+
+    lastEvents := make(map[string]Event)
+
+    for scanner.Scan() {
+        line := scanner.Bytes()
+
+        ev, err := parseLineToEvent(line)
+        if err != nil {
+            continue
+        }
+
+         lastEvents[ev.Key] = ev
+    }
+
+    err = scanner.Err()
+    if err != nil {
+        return fmt.Errorf("txlog: scan for compaction: %w", err)
+    }
+
+    tmpPath := path + ".compact"
+    tmpFile, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+    if err != nil {
+        return fmt.Errorf("txlog: open temp file for compaction: %w", err)
+    }
+
+    tmpLog := &FileLog{file: tmpFile}
+
+    for _, ev := range lastEvents {
+        if ev.Op != "set" {
+            continue
+        }
+        err = tmpLog.Append(ev)
+        if err != nil {
+            tmpLog.Close()
+            return fmt.Errorf("txlog: append during compaction: %w", err)
+        }
+    }
+
+    err = tmpLog.Close()
+    if err != nil {
+        return fmt.Errorf("txlog: close temp log during compaction: %w", err)
+    }
+
+    err = os.Rename(tmpPath,path )
+    if err != nil {
+        return fmt.Errorf("txlog: rename compacted log: %w", err)
+    }
+    return nil
+}
+
+func parseLineToEvent(line []byte)(Event ,error) {
+    var ev Event
+
+    var firstSpace, secondSpace, thirdSpace int = -1, -1, -1
+
+    for i, b := range line {
+    	if b == ' ' {
+    		if firstSpace == -1 {
+    			firstSpace = i
+    		} else if secondSpace == -1 {
+    			secondSpace = i
+    		} else {
+    			thirdSpace = i
+    			break
+    		}
+        }
+    }
+
+    if firstSpace == -1 || secondSpace == -1 || thirdSpace == -1 {
+    	return ev, fmt.Errorf("txlog: invalid line format (spaces)")
+    }
+
+    op := string(line[:firstSpace])
+
+    var lenK, lenV int
+    _, err := fmt.Sscanf(string(line[firstSpace+1:secondSpace]), "%d", &lenK)
+    if err != nil {
+    	return ev, fmt.Errorf("txlog: parse lenK: %w", err)
+    }
+    _, err = fmt.Sscanf(string(line[secondSpace+1:thirdSpace]), "%d", &lenV)
+    if err != nil {
+    	return ev, fmt.Errorf("txlog: parse lenV: %w", err)
+    }
+
+    data := line[thirdSpace+1:]
+    if len(data) < lenK+lenV {
+    	return ev, fmt.Errorf("txlog: data too short")
+    }
+
+    keyBytes := data[:lenK]
+    valBytes := data[lenK : lenK+lenV]
+
+    ev.Op = op
+    ev.Key = string(keyBytes)
+    ev.Value = string(valBytes)
+
+    return ev, nil
 }
