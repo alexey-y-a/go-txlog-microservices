@@ -36,7 +36,7 @@ func TestE2E_ApiGatewayAndKVService(t *testing.T) {
 
 	logger.Init()
 
-	cmdKv := exec.Command("go", "run", "./services/kv-service/cmd/kv")
+	cmdKv := exec.Command("go", "run", "../../../kv-service/cmd/kv")
 	cmdKv.Stdout = os.Stdout
 	cmdKv.Stderr = os.Stderr
 
@@ -47,7 +47,7 @@ func TestE2E_ApiGatewayAndKVService(t *testing.T) {
 		_ = cmdKv.Process.Kill()
 	}()
 
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	apiSrv := apiserver.NewServer("http://localhost:8081")
 

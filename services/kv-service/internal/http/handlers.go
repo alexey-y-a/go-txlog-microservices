@@ -26,22 +26,22 @@ type healthResponse struct {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-    mux.HandleFunc("/health", healthHandler)
+    mux.HandleFunc("/health", h.HealthHandler)
 
-    mux.HandleFunc("/kv/set", h.setHandler)
+    mux.HandleFunc("/kv/set", h.SetHandler)
 
-    mux.HandleFunc("kv/get", h.getHandler)
+    mux.HandleFunc("kv/get", h.GetHandler)
 
-    mux.HandleFunc("kv/del", h.deleteHandler)
+    mux.HandleFunc("kv/del", h.DeleteHandler)
 
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
     log := logger.L().With().Str("handler", "health").Logger()
 
     response := healthResponse{
         Status: "ok",
-        Time: time.Now().UTC().Format(time.RFC3339),
+        Time:   time.Now().UTC().Format(time.RFC3339),
     }
 
     w.Header().Set("Content-Type", "application/json")
@@ -63,7 +63,7 @@ type commonResponse struct {
     Message string `json:"message,omitempty"`
 }
 
-func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SetHandler(w http.ResponseWriter, r *http.Request) {
     log := logger.L().With().Str("handler", "set").Logger()
 
     if r.Method != http.MethodPost {
@@ -118,7 +118,7 @@ type getResponse struct {
     Value string `json:"value, omitempty"`
 }
 
-func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	log := logger.L().With().Str("handler", "get").Logger()
 
 	if r.Method != http.MethodGet {
@@ -152,7 +152,7 @@ func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) deleteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	log := logger.L().With().Str("handler", "delete").Logger()
 
 	if r.Method != http.MethodDelete {
