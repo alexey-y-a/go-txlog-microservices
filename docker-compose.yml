@@ -1,4 +1,4 @@
-version : "3.9"
+version: "3.9"
 
 services:
   kv-service:
@@ -9,14 +9,37 @@ services:
     ports:
       - "8081:8081"
     restart: unless-stopped
+    networks:
+      - observability
 
   api-gateway:
     build:
       context: .
       dockerfile: ./services/api-gateway/Dockerfile
-    container-name: api-gateway
+    container_name: api-gateway   # БЫЛО: container-name (ошибка)
     ports:
       - "8080:8080"
     depends_on:
       - kv-service
     restart: unless-stopped
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api-gateway
+      - kv-service
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge
