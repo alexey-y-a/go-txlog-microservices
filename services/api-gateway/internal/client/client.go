@@ -29,8 +29,8 @@ type setRequest struct {
 }
 
 type commonResponse struct {
-    Status string `json:"status"`
-    Message string `json:message,omitempty"`
+    Status  string `json:"status"`
+    Message string `json:"message,omitempty"`
 }
 
 func (c *KVClient) Set(key, value string) error {
@@ -44,7 +44,7 @@ func (c *KVClient) Set(key, value string) error {
         return fmt.Errorf("kvclient: marshal set request: %w", err)
     }
 
-    url := c.baseURL + "kv/set"
+    url := c.baseURL + "/kv/set"
 
     req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
     if err != nil {
@@ -72,7 +72,7 @@ type getResponse struct {
 }
 
 func (c *KVClient) Get(key string) (string, bool, error) {
-    url := c.baseURL + "kv/get?key=" + key
+    url := c.baseURL + "/kv/get?key=" + key
 
     req, err := http.NewRequest(http.MethodGet, url, nil)
     if err != nil {
@@ -104,7 +104,7 @@ func (c *KVClient) Get(key string) (string, bool, error) {
 }
 
 func (c *KVClient) Delete(key string) error {
-    url := c.baseURL + "kv/delete?key=" + key
+    url := c.baseURL + "/kv/delete?key=" + key
 
     req, err := http.NewRequest(http.MethodDelete, url, nil)
     if err != nil {
